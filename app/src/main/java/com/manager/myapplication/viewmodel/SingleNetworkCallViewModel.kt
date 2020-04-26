@@ -8,28 +8,30 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.manager.myapplication.model.MyPojo
 import com.manager.myapplication.model.api.ApiHelper
+import com.manager.myapplication.model.api.ApiHelperImpl
+import com.manager.myapplication.model.api.RetrofitBuilder
+import com.manager.myapplication.utils.Resource
 import kotlinx.coroutines.launch
 import java.lang.Exception
 
-class RetroViewModel(private val apiHelper: ApiHelper, private val context: Context) : ViewModel(){
+class SingleNetworkCallViewModel : ViewModel(){
 
-    private val message = MutableLiveData<List<MyPojo>>()
-
+    private val message = MutableLiveData<Resource<List<MyPojo>>>()
 
     fun fetchMessage() {
+        val apiHelper = ApiHelperImpl(RetrofitBuilder.apiInterface)
         viewModelScope.launch {
+            message.postValue(Resource.loading(null))
             try {
                 val messages = apiHelper.getMessages()
-                message.postValue(messages)
-            }catch (e:Exception){
-                Toast.makeText(context,"Something went wrong",Toast.LENGTH_SHORT).show()
+                message.postValue(Resource.success(messages))
+            } catch (e:Exception){
+                message.postValue(Resource.error("Something went wrong!",null))
             }
         }
     }
 
-
-
-    fun getMessage(): LiveData<List<MyPojo>>{
+    fun getMessage(): LiveData<Resource<List<MyPojo>>>{
         return message
     }
 
